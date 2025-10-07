@@ -103,7 +103,7 @@ const ReferralSystem = () => {
               >
                 <TextField
                   value={
-                    "http://CoreXCapital.live/auth/register"
+                    "http://corexcapital.net/auth/register"
                   }
                   sx={{ width: `${size.width < 400 ? "170px" : "240px"}` }}
                 />
@@ -121,7 +121,7 @@ const ReferralSystem = () => {
                   sx={{ fontWeight: "bold" }}
                   color="secondary"
                   onClick={() =>
-                    handleCopyReferralLinkMobile("http://CoreXCapital.live/auth/register")
+                    handleCopyReferralLinkMobile("http://corexcapital.net/auth/register")
                   }
                 >
                   Copy Link
@@ -152,7 +152,7 @@ const ReferralSystem = () => {
           <Stack direction={"row"} spacing={1} display={{xs: "none", md: "flex"}}>
             <TextField
               value={
-                "http://CoreXCapital.live/auth/register"
+                "http://corexcapital.net/auth/register"
               }
               sx={{ width: `${size.width < 400 ? "200px" : "250px"}` }}
             />
@@ -170,7 +170,7 @@ const ReferralSystem = () => {
               sx={{ fontWeight: "bold" }}
               color="secondary"
               onClick={() =>
-                handleCopyReferralLink("http://CoreXCapital.live/auth/register")
+                handleCopyReferralLink("http://corexcapital.net/auth/register")
               }
             >
               Copy Link
@@ -178,7 +178,7 @@ const ReferralSystem = () => {
            </Tooltip>
           </Stack>
           {/* <Typography variant="subtitle2">
-            http://CoreXCapital.live/register
+            http://corexcapital.net/register
           </Typography> */}
         </Stack>
       </Stack>
