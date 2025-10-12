@@ -306,160 +306,121 @@ const verifyOTP = asyncHandler(async (req, res) => {
 
 //kycSetup
 const kycSetup = asyncHandler(async (req, res) => {
-  // console.log(req.body);
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    // console.log(errors.array()); // Log all errors for debugging
-    res.status(400);
-    throw new Error(errors.array()[0].msg);
-  }
-
-  const userId = req.user._id;
-  const user = await User.findById(userId).select("-password");
-
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
-
-  // Handle file upload
-  const file = req.file; // Get the uploaded file from req.file
-  if (!file) {
-    res.status(404);
-    throw new Error("No file uploaded");
-  }
-
-  // Check if the uploaded file is an image
-  const validMimeTypes = ["image/png", "image/jpeg", "image/jpg"];
-  const uploadedMimeType = file.mimetype.toLowerCase(); // Convert to lowercase for case-insensitive comparison
-  if (!validMimeTypes.includes(uploadedMimeType)) {
-    res.status(400);
-    throw new Error("Uploaded file is not a valid image");
-  }
-
-  // Validate file size (5MB limit)
-  const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
-  if (file.size > maxSizeInBytes) {
-    res.status(400);
-    throw new Error("Image size exceeds 5MB limit");
-  }
-
-  // Get the current photo URL
-  const currentPhotoUrl = user.photo;
-
-  try {
-    // If the current photo exists, delete it from Cloudinary
-    if (currentPhotoUrl) {
-      const publicId = getPublicIdFromUrl(currentPhotoUrl);
-
-      // ✅ FIX 1: Add a robust check for publicId
-      if (
-        publicId &&
-        typeof publicId === "string" &&
-        publicId.trim().length > 0
-      ) {
-        try {
-          await cloudinary.uploader.destroy(publicId); // Delete the old image
-          console.log(`Successfully deleted old Cloudinary photo: ${publicId}`);
-        } catch (deletionError) {
-          console.warn(
-            `Cloudinary deletion failed for ID ${publicId}. Likely already deleted or non-existent. Error: ${deletionError.message}`
-          );
-        }
-      } else {
-        // Log a warning if a photo URL existed but a publicId couldn't be extracted.
-        console.warn(
-          `Photo URL existed (${currentPhotoUrl}), but no valid public ID could be extracted. Skipping Cloudinary deletion.`
-        );
-      }
+    // 1. Validation Check (Assuming you are using express-validator middleware)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400);
+        // Throw the first error message to be caught by asyncHandler
+        throw new Error(errors.array()[0].msg); 
     }
 
-    // Get the MIME type of the uploaded file
-    // const mimeType = file.mimetype.toLowerCase();
+    // 2. User & File Check
+    const userId = req.user._id; // Assumes req.user is populated by auth middleware
+    const user = await User.findById(userId).select("-password");
 
-    // let compressedImageBuffer;
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
 
-    // Compress image based on MIME type
-    // if (mimeType === "image/png") {
-    //   // Compress PNG and keep it as PNG
-    //   compressedImageBuffer = await sharp(file.buffer)
-    //     .resize(500) // Resize to width of 800 pixels, keeping aspect ratio
-    //     .png({ quality: 70, compressionLevel: 9 }) // PNG compression with quality 70
-    //     .toBuffer();
-    // } else if (mimeType === "image/jpeg" || mimeType === "image/jpg") {
-    //   // Compress JPEG/JPG and keep it as JPEG
-    //   compressedImageBuffer = await sharp(file.buffer)
-    //     .resize(500) // Resize to width of 800 pixels, keeping aspect ratio
-    //     .jpeg({ quality: 70 }) // JPEG compression with quality 80
-    //     .toBuffer();
-    // } else {
-    //   // Compress any other file type and convert to JPEG
-    //   compressedImageBuffer = await sharp(file.buffer)
-    //     .resize(500) // Resize to width of 800 pixels, keeping aspect ratio
-    //     .jpeg({ quality: 70 }) // Default to JPEG with quality 80
-    //     .toBuffer();
-    // }
+    const file = req.file; // Get the uploaded file from req.file (via Multer)
+    if (!file) {
+        res.status(404);
+        throw new Error("No file uploaded");
+    }
 
-    // Specify the folder name where you want to upload the image
-    const folderName = "profile_photos";
+    // 3. File Sanity Checks
+    const validMimeTypes = ["image/png", "image/jpeg", "image/jpg"];
+    if (!validMimeTypes.includes(file.mimetype.toLowerCase())) {
+        res.status(400);
+        throw new Error("Uploaded file is not a valid image (JPEG/PNG only)");
+    }
 
-    // Upload the image to Cloudinary
-    const result = await cloudinary.uploader
-      .upload_stream(
-        { resource_type: "auto", folder: folderName },
-        async (error, result) => {
-          if (error) {
-            return res.status(500).json({ error: "Image upload failed" });
-          }
+    const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSizeInBytes) {
+        res.status(400);
+        throw new Error("Image size exceeds 5MB limit");
+    }
 
-          if (user) {
-            const {
-              address,
-              phone,
-              accounttype,
-              package,
-              currency,
-              photo,
-              pin,
-            } = user;
+    let mediaUrl;
 
-            const updateAddress = {
-              address: req.body.userData.address,
-              state: req.body.userData.state,
-              country: req.body.userData.country.label,
-              countryFlag: req.body.userData.country.code.toLowerCase(),
-            };
+    try {
+        // --- CLOUDINARY LOGIC (FIXED) ---
 
-            const updateCurrency = {
-              code: req.body.userData.currency.code,
-              flag: req.body.userData.currency.flag,
-            };
+        // 3a. Delete old photo if it exists (using robust method)
+        const currentPhotoUrl = user.photo;
+        if (currentPhotoUrl) {
+            const publicId = getPublicIdFromUrl(currentPhotoUrl);
 
-            user.address = updateAddress || address;
-            user.phone = req.body.userData.phone || phone;
-            user.accounttype = req.body.userData.accounttype || accounttype;
-            user.package = req.body.userData.package || package;
-            user.currency = updateCurrency || currency;
-            user.pin = req.body.userData.pin || pin;
-            user.photo = result.secure_url || photo;
-
-            const updatedUser = await user.save({
-              new: true,
-              validateModifiedOnly: true,
-            });
-
-            return res.status(200).json(updatedUser);
-          } else {
-            res.status(404);
-            throw new Error("User not found");
-          }
+            if (publicId && typeof publicId === "string" && publicId.trim().length > 0) {
+                try {
+                    await cloudinary.uploader.destroy(publicId); 
+                    console.log(`Successfully deleted old Cloudinary photo: ${publicId}`);
+                } catch (deletionError) {
+                    console.warn(`Cloudinary deletion failed: ${deletionError.message}`);
+                }
+            }
         }
-      )
-      .end(file.buffer); // Use the file buffer for the upload
-  } catch (err) {
-    res.status(500).json({ message: err.message || "Failed to upload image" });
-  }
+        
+        // 3b. Convert Buffer to Base64 Data URL (required for standard Cloudinary upload)
+        const base64Media = `data:${file.mimetype};base64,${file.buffer.toString(
+            "base64"
+        )}`;
+
+        // 3c. Upload the new image using promise-based upload (resolves async issue)
+        const folderName = "profile_photos";
+        const uploadResponse = await cloudinary.uploader.upload(base64Media, {
+            folder: folderName,
+            resource_type: "image",
+            // Use Cloudinary for resizing/optimization safely
+            transformation: [
+                { width: 500, height: 500, crop: "fill" }, 
+                { quality: "auto:good" },
+            ],
+        });
+
+        mediaUrl = uploadResponse.secure_url;
+
+    } catch (uploadError) {
+        // This catch block will specifically handle Cloudinary issues
+        console.error("Cloudinary operation failed:", uploadError);
+        res.status(502); // Bad Gateway
+        throw new Error("Image upload service failed. Please try again.");
+    }
+
+    // 4. Update User Data
+    
+    // IMPORTANT: Parse the JSON string from FormData
+    const userData = JSON.parse(req.body.userData); 
+
+    const updateAddress = {
+        address: userData.address,
+        state: userData.state,
+        country: userData.country.label,
+        countryFlag: userData.country.code.toLowerCase(),
+    };
+
+    const updateCurrency = {
+        code: userData.currency.code,
+        flag: userData.currency.flag,
+    };
+
+    // Update user fields
+    user.address = updateAddress;
+    user.phone = userData.phone;
+    user.accounttype = userData.accounttype;
+    user.package = userData.package;
+    user.currency = updateCurrency;
+    user.pin = userData.pin;
+    user.photo = mediaUrl; // Set the new photo URL
+
+    const updatedUser = await user.save({
+        new: true,
+        validateModifiedOnly: true,
+    });
+
+    // 5. Send Success Response
+    res.status(200).json(updatedUser);
 });
 
 //idVerificationUpload
