@@ -4,23 +4,17 @@ const Deposit = require("../models/depositModel");
 const axios = require("axios");
 const { getPublicIdFromUrl } = require("../utils");
 const cloudinary = require("cloudinary").v2;
-const { validationResult } = require('express-validator');
+const { validationResult } = require("express-validator");
 const sharp = require("sharp"); // Import sharp
-const { adminGeneralEmailTemplate } = require("../emailTemplates/adminGeneralEmailTemplate");
+const {
+  adminGeneralEmailTemplate,
+} = require("../emailTemplates/adminGeneralEmailTemplate");
 const sendEmail = require("../utils/sendEmail");
 const Notifications = require("../models/notificationsModel");
 
-
-
-
 //Deposit Fund
 const depositFund = asyncHandler(async (req, res) => {
-  const {
-    method,
-    amount,
-    typeOfDeposit,
-    methodIcon,
-  } = req.body.userData;
+  const { method, amount, typeOfDeposit, methodIcon } = req.body.userData;
 
   // Validate
   if (!method || !amount || !typeOfDeposit || !methodIcon) {
@@ -89,56 +83,67 @@ const depositFund = asyncHandler(async (req, res) => {
             return res.status(500).json({ error: "Image upload failed" });
           }
 
-        //Save transaction
-        const depositHistory = await Deposit.create({
-          userId: req.user._id,
-          typeOfDeposit,
-          method,
-          amount,
-          status: "PENDING",
-          depositProof: result.secure_url,
-          methodIcon,
-        });
+          //Save transaction
+          const depositHistory = await Deposit.create({
+            userId: req.user._id,
+            typeOfDeposit,
+            method,
+            amount,
+            status: "PENDING",
+            depositProof: result.secure_url,
+            methodIcon,
+          });
 
-        //Send Email to admin
+          //Send Email to admin
 
-       
-        if (depositHistory) {
+          if (depositHistory) {
+            // Send New Deposit Request email to admin
+            const introMessage = `This user ${
+              req.user.firstname + " " + req.user.lastname
+            } with email address ${
+              req.user.email
+            } just made a deposit request of ${amount} ${
+              req.user.currency.code
+            } with ${method} method`;
 
-      // Send New Deposit Request email to admin
-       const introMessage = `This user ${req.user.firstname+" "+req.user.lastname} with email address ${req.user.email} just made a deposit request of ${amount} ${req.user.currency.code} with ${method} method`
+            const subjectAdmin = "New Deposit Request - corexcapital";
+            const send_to_Admin = process.env.EMAIL_USER;
+            const templateAdmin = adminGeneralEmailTemplate(
+              "Admin",
+              introMessage
+            );
+            const reply_toAdmin = "no_reply@corexcapital.net";
 
-        const subjectAdmin = "New Deposit Request - corexcapital"
-        const send_to_Admin = process.env.EMAIL_USER
-        const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-        const reply_toAdmin = "no_reply@corexcapital.net"
+            await sendEmail(
+              subjectAdmin,
+              send_to_Admin,
+              templateAdmin,
+              reply_toAdmin
+            );
 
-        await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
+            //send dashboard notification message object to admin
+            const searchWord = "Support Team";
+            const notificationObject = {
+              to: searchWord,
+              from: `${req.user.firstname + " " + req.user.lastname}`,
+              notificationIcon: "CurrencyCircleDollar",
+              title: "New Deposit Request",
+              message: ` ${
+                req.user.firstname + " " + req.user.lastname
+              } with email address ${req.user.email} made a deposit request`,
+              route: "/dashboard",
+            };
 
+            // Add the Notifications
+            await Notifications.updateOne(
+              { userId: req.user._id },
+              { $push: { notifications: notificationObject } },
+              { upsert: true } // Creates a new document if recipient doesn't exist
+            );
 
-        //send dashboard notification message object to admin
-        const searchWord = "Support Team";
-        const notificationObject = {
-          to: searchWord,
-          from: `${req.user.firstname+" "+req.user.lastname}`,
-          notificationIcon: "CurrencyCircleDollar",
-          title: "New Deposit Request",
-          message: ` ${req.user.firstname+" "+req.user.lastname} with email address ${req.user.email} made a deposit request`,
-          route: "/dashboard",
-        };
-      
-        // Add the Notifications
-        await Notifications.updateOne(
-          { userId: req.user._id },
-          { $push: { notifications: notificationObject } },
-          { upsert: true } // Creates a new document if recipient doesn't exist
-        );
-
-
-
-
-            res.status(200).json({ message: "Your Deposit Request has been initiated successfully " });
-
+            res.status(200).json({
+              message: "Your Deposit Request has been initiated successfully ",
+            });
           } else {
             res.status(500).json({ message: "An error has occurred" });
           }
@@ -162,54 +167,62 @@ const depositFund = asyncHandler(async (req, res) => {
   // res.status(200).json(withdrawalHistory);
 });
 
-
 //requestDepositDetails
 const requestDepositDetails = asyncHandler(async (req, res) => {
-  const {
-    method,
-    amount,
-  } = req.body;
+  const { method, amount } = req.body;
 
   // Validate
-  if (!method || !amount ) {
+  if (!method || !amount) {
     res.status(400);
     throw new Error("Please fill in the required fields");
   }
 
   //Send Email to admin
 
-   // Send New Deposit Request email to admin
-   const introMessage = `This user ${req.user.firstname+" "+req.user.lastname} with email address ${req.user.email} just requested a ${method} deposit details for the deposit of ${amount} ${req.user.currency.code}`
+  // Send New Deposit Request email to admin
+  const introMessage = `This user ${
+    req.user.firstname + " " + req.user.lastname
+  } with email address ${
+    req.user.email
+  } just requested a ${method} deposit details for the deposit of ${amount} ${
+    req.user.currency.code
+  }`;
 
-   const subjectAdmin = "New Deposit Request - corexcapital"
-   const send_to_Admin = process.env.EMAIL_USER
-   const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-   const reply_toAdmin = "no_reply@corexcapital.net"
+  const subjectAdmin = "New Deposit Request - corexcapital";
+  const send_to_Admin = process.env.EMAIL_USER;
+  const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage);
+  const reply_toAdmin = "no_reply@corexcapital.net";
 
-   await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
+  await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
+  //send dashboard notification message object to admin
+  const searchWord = "Support Team";
+  const notificationObject = {
+    to: searchWord,
+    from: `${req.user.firstname + " " + req.user.lastname}`,
+    notificationIcon: "CurrencyCircleDollar",
+    title: "New Deposit Request",
+    message: ` ${
+      req.user.firstname + " " + req.user.lastname
+    } with email address ${
+      req.user.email
+    } just requested a ${method} deposit details for the deposit of ${amount} ${
+      req.user.currency.code
+    } `,
+    route: "/dashboard",
+  };
 
-   //send dashboard notification message object to admin
-   const searchWord = "Support Team";
-   const notificationObject = {
-     to: searchWord,
-     from: `${req.user.firstname+" "+req.user.lastname}`,
-     notificationIcon: "CurrencyCircleDollar",
-     title: "New Deposit Request",
-     message: ` ${req.user.firstname+" "+req.user.lastname} with email address ${req.user.email} just requested a ${method} deposit details for the deposit of ${amount} ${req.user.currency.code} `,
-     route: "/dashboard",
-   };
- 
-   // Add the Notifications
-   await Notifications.updateOne(
-     { userId: req.user._id },
-     { $push: { notifications: notificationObject } },
-     { upsert: true } // Creates a new document if recipient doesn't exist
-   );
+  // Add the Notifications
+  await Notifications.updateOne(
+    { userId: req.user._id },
+    { $push: { notifications: notificationObject } },
+    { upsert: true } // Creates a new document if recipient doesn't exist
+  );
 
-
-
-  res.status(200).json({ message: "Your request has been sent successfully, you will be contacted shhortly." });
+  res.status(200).json({
+    message:
+      "Your request has been sent successfully, you will be contacted shhortly.",
+  });
   // res.status(200).json(withdrawalHistory);
 });
 
@@ -251,19 +264,18 @@ const adminGetUserDeposithistory = asyncHandler(async (req, res) => {
   res.status(200).json(depositHistory);
 });
 
-
 //Admin Get All Pending Deposit Request
-const getAllPendingDepositRequest = asyncHandler (async (req, res) => {
-  const AllPendingDepositRequest = await Deposit.find({ status: "PENDING" }).sort("-createdAt").populate("userId");
-  res.status(200).json(AllPendingDepositRequest)
+const getAllPendingDepositRequest = asyncHandler(async (req, res) => {
+  const AllPendingDepositRequest = await Deposit.find({ status: "PENDING" })
+    .sort("-createdAt")
+    .populate("userId");
+  res.status(200).json(AllPendingDepositRequest);
 });
-
 
 //Admin Approve Deposit Request
 const approveDepositRequest = asyncHandler(async (req, res) => {
   const requestId = req.params.id;
   const depositRequest = await Deposit.findById(requestId).select("-password");
-  
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -272,18 +284,23 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
     throw new Error(errors.array()[0].msg);
   }
 
-  if(req.body.comment === "ApproveWithBalance" && req.body.typeOfDeposit === "Trade") {
+  if (
+    req.body.comment === "ApproveWithBalance" &&
+    req.body.typeOfDeposit === "Trade"
+  ) {
     //Add to user account balance
-  await User.findOneAndUpdate(
-    { _id: req.body.userId },
-    {
-      $inc: { balance: req.body.amount, totalDeposit: req.body.amount },
-    }
-  );
+    await User.findOneAndUpdate(
+      { _id: req.body.userId },
+      {
+        $inc: { balance: req.body.amount, totalDeposit: req.body.amount },
+      }
+    );
   }
-  
-  if (req.body.comment === "ApproveWithBalance" && req.body.typeOfDeposit === "Wallet") {
 
+  if (
+    req.body.comment === "ApproveWithBalance" &&
+    req.body.typeOfDeposit === "Wallet"
+  ) {
     await User.findOneAndUpdate(
       { _id: req.body.userId },
       {
@@ -300,10 +317,9 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
     // );
   }
 
-
   if (depositRequest) {
     const { typeOfDeposit, method, amount, status, depositProof } =
-    depositRequest;
+      depositRequest;
 
     depositRequest.typeOfDeposit = req.body.typeOfDeposit || typeOfDeposit;
     depositRequest.method = req.body.method || method;
@@ -314,29 +330,28 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
     const updatedDepositRequest = await depositRequest.save();
 
     if (updatedDepositRequest) {
+      //send deposit approval notification message object to user
+      const searchWord = "Support Team";
+      const notificationObject = {
+        to: `This user`,
+        from: searchWord,
+        notificationIcon: "CurrencyCircleDollar",
+        title: "Deposit Request",
+        message: `Your deposit request of ${amount} has been updated. Please check your deposit history.`,
+        route: "/dashboard",
+      };
 
-  //send deposit approval notification message object to user
-  const searchWord = "Support Team";
-  const notificationObject = {
-    to: `This user`,
-    from: searchWord,
-    notificationIcon: "CurrencyCircleDollar",
-    title: "Deposit Request",
-    message: `Your deposit request of ${amount} has been updated. Please check your deposit history.`,
-    route: "/dashboard"
-  };
+      // Add the Notifications
+      await Notifications.updateOne(
+        { userId: depositRequest.userId },
+        { $push: { notifications: notificationObject } },
+        { upsert: true } // Creates a new document if recipient doesn't exist
+      );
 
-  // Add the Notifications
-  await Notifications.updateOne(
-    { userId: depositRequest.userId },
-    { $push: { notifications: notificationObject } },
-    { upsert: true } // Creates a new document if recipient doesn't exist
-  );
-
-
-      const AllPendingDepositRequest = await Deposit.find({ status: "PENDING" }).sort("-createdAt").populate("userId");
+      const AllPendingDepositRequest = await Deposit.find({ status: "PENDING" })
+        .sort("-createdAt")
+        .populate("userId");
       res.status(200).json(AllPendingDepositRequest);
-
     } else {
       res.status(404);
       throw new Error("An Error Occur");
@@ -346,7 +361,6 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
     throw new Error("Deposit Request not found");
   }
 });
-
 
 // Admin Delete Deposit Request
 
@@ -363,53 +377,51 @@ const deleteDepositRequest = asyncHandler(async (req, res) => {
 
   if (deleteDepositrequest && depositRequest.depositProof) {
     const publicId = getPublicIdFromUrl(depositRequest.depositProof);
-    cloudinary.uploader.destroy(publicId); // Delete the deposit request image
+    await cloudinary.uploader.destroy(publicId); // Delete the deposit request image
   }
 
-  const AllPendingDepositRequest = await Deposit.find({ status: "PENDING" }).sort("-createdAt").populate("userId");
-  res.status(200)
-  .json({ data: AllPendingDepositRequest, message: "Deposit Request deleted successfully" });
-
- 
+  const AllPendingDepositRequest = await Deposit.find({ status: "PENDING" })
+    .sort("-createdAt")
+    .populate("userId");
+  res.status(200).json({
+    data: AllPendingDepositRequest,
+    message: "Deposit Request deleted successfully",
+  });
 });
-
-
-
 
 //adminAddTradeHistoryToUser Fund
 const adminAddTradeHistoryToUser = asyncHandler(async (req, res) => {
   // console.log(req.body)
-  
-    const {
-      typeOfDeposit,
-      method,
-      amount,
-      status,
-      userId,
-      methodIcon,
-    } = req.body;
-  
-    // Validate
-    if (!method || !amount || !typeOfDeposit || !status || !userId || !methodIcon) {
-      res.status(400);
-      throw new Error("Please fill in the required fields");
-    }
-  
-    //Save transaction
-    const depositHistory = await Deposit.create({
-      ...req.body,
-      userId,
-    });
-  
-    //Send Email to admin
-  
-    res.status(200).json({ message: "Deposit History added to user successfully " });
-    // res.status(200).json(withdrawalHistory);
+
+  const { typeOfDeposit, method, amount, status, userId, methodIcon } =
+    req.body;
+
+  // Validate
+  if (
+    !method ||
+    !amount ||
+    !typeOfDeposit ||
+    !status ||
+    !userId ||
+    !methodIcon
+  ) {
+    res.status(400);
+    throw new Error("Please fill in the required fields");
+  }
+
+  //Save transaction
+  const depositHistory = await Deposit.create({
+    ...req.body,
+    userId,
   });
-  
 
+  //Send Email to admin
 
-
+  res
+    .status(200)
+    .json({ message: "Deposit History added to user successfully " });
+  // res.status(200).json(withdrawalHistory);
+});
 
 module.exports = {
   depositFund,

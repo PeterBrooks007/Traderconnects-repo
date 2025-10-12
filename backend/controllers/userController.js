@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const crypto = require('crypto');
+const crypto = require("crypto");
 const User = require("../models/userModel");
 const axios = require("axios");
 const { validationResult } = require("express-validator");
@@ -17,15 +17,25 @@ const Withdrawal = require("../models/withdrawalModel");
 const Trades = require("../models/tradesModel");
 const sendEmail = require("../utils/sendEmail");
 const { otpEmailTemplate } = require("../emailTemplates/otpEmailTemplate");
-const { NewUserEmailTemplate } = require("../emailTemplates/NewUserEmailTemplate");
-const { adminGeneralEmailTemplate } = require("../emailTemplates/adminGeneralEmailTemplate");
-const { userGeneralEmailTemplate } = require("../emailTemplates/userGeneralEmailTemplate");
-const { twoFaOtpEmailTemplate } = require("../emailTemplates/twoFaOtpEmailTemplate");
-const { resetPasswordEmailTemplate } = require("../emailTemplates/resetPasswordEmailTemplate");
+const {
+  NewUserEmailTemplate,
+} = require("../emailTemplates/NewUserEmailTemplate");
+const {
+  adminGeneralEmailTemplate,
+} = require("../emailTemplates/adminGeneralEmailTemplate");
+const {
+  userGeneralEmailTemplate,
+} = require("../emailTemplates/userGeneralEmailTemplate");
+const {
+  twoFaOtpEmailTemplate,
+} = require("../emailTemplates/twoFaOtpEmailTemplate");
+const {
+  resetPasswordEmailTemplate,
+} = require("../emailTemplates/resetPasswordEmailTemplate");
 const sendCustomizedEmail = require("../utils/sendCustomizedEmail");
-const { sendCustomizeEmailTemplate } = require("../emailTemplates/sendCustomizeEmailTemplate");
-
-
+const {
+  sendCustomizeEmailTemplate,
+} = require("../emailTemplates/sendCustomizeEmailTemplate");
 
 // Cloudinary configuration
 cloudinary.config({
@@ -195,51 +205,48 @@ const sendOTP = asyncHandler(async (req, res) => {
   //   html: otp(user.firstName, new_otp),
   //   attachments: [],
   // });
-  
-  
+
   // Send OTP Email to the user
-  const subject = "OTP CODE - corexcapital"
-  const send_to = user.email
-  const template =  twofaAuthentication ? twoFaOtpEmailTemplate(user.firstname+" "+user.lastname, new_otp) :  otpEmailTemplate(user.firstname+" "+user.lastname, new_otp)
-  const reply_to = process.env.EMAIL_USER
+  const subject = "OTP CODE - corexcapital";
+  const send_to = user.email;
+  const template = twofaAuthentication
+    ? twoFaOtpEmailTemplate(user.firstname + " " + user.lastname, new_otp)
+    : otpEmailTemplate(user.firstname + " " + user.lastname, new_otp);
+  const reply_to = process.env.EMAIL_USER;
 
-  await sendEmail(subject, send_to, template, reply_to)
+  await sendEmail(subject, send_to, template, reply_to);
 
+  if (twofaAuthentication !== true && verifyEmailResendOtp !== true) {
+    // Send New Account Registration Notification email to admin
+    const subjectAdmin = "New User Registration - corexcapital";
+    const send_to_Admin = process.env.EMAIL_USER;
+    const templateAdmin = NewUserEmailTemplate("Admin", user);
+    const reply_toAdmin = "no_reply@corexcapital.net";
 
+    await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
-if(twofaAuthentication !== true && verifyEmailResendOtp !== true) {
-
- // Send New Account Registration Notification email to admin
- const subjectAdmin = "New User Registration - corexcapital"
- const send_to_Admin = process.env.EMAIL_USER
- const templateAdmin = NewUserEmailTemplate("Admin", user)
- const reply_toAdmin = "no_reply@corexcapital.net"
-
- await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
-
- 
- //send dashboard notification message object to admin
+    //send dashboard notification message object to admin
 
     const searchWord = "Support Team";
 
     const notificationObject = {
-     to: searchWord,
-     from: `${user.firstname+" "+user.lastname}`,
-     notificationIcon: "CurrencyCircleDollar",
-     title: "New User Registration",
-     message: ` ${user.firstname+" "+user.lastname} with email address ${user.email} just created an account`,
-     route: "/dashboard",
-   };
- 
-   // Add the Notifications
-   await Notifications.updateOne(
-     { userId: user._id },
-     { $push: { notifications: notificationObject } },
-     { upsert: true } // Creates a new document if recipient doesn't exist
-   );
+      to: searchWord,
+      from: `${user.firstname + " " + user.lastname}`,
+      notificationIcon: "CurrencyCircleDollar",
+      title: "New User Registration",
+      message: ` ${user.firstname + " " + user.lastname} with email address ${
+        user.email
+      } just created an account`,
+      route: "/dashboard",
+    };
 
-}
- 
+    // Add the Notifications
+    await Notifications.updateOne(
+      { userId: user._id },
+      { $push: { notifications: notificationObject } },
+      { upsert: true } // Creates a new document if recipient doesn't exist
+    );
+  }
 
   res.status(201).json({
     data: user.email,
@@ -272,9 +279,9 @@ const verifyOTP = asyncHandler(async (req, res) => {
   }
 
   // OTP is correct
-if(twofaAuthentication !== true) {
-  user.isEmailVerified = true;
-}
+  if (twofaAuthentication !== true) {
+    user.isEmailVerified = true;
+  }
 
   user.otp = undefined;
 
@@ -345,7 +352,27 @@ const kycSetup = asyncHandler(async (req, res) => {
     // If the current photo exists, delete it from Cloudinary
     if (currentPhotoUrl) {
       const publicId = getPublicIdFromUrl(currentPhotoUrl);
-      cloudinary.uploader.destroy(publicId); // Delete the old image
+
+      // ✅ FIX 1: Add a robust check for publicId
+      if (
+        publicId &&
+        typeof publicId === "string" &&
+        publicId.trim().length > 0
+      ) {
+        try {
+          await cloudinary.uploader.destroy(publicId); // Delete the old image
+          console.log(`Successfully deleted old Cloudinary photo: ${publicId}`);
+        } catch (deletionError) {
+          console.warn(
+            `Cloudinary deletion failed for ID ${publicId}. Likely already deleted or non-existent. Error: ${deletionError.message}`
+          );
+        }
+      } else {
+        // Log a warning if a photo URL existed but a publicId couldn't be extracted.
+        console.warn(
+          `Photo URL existed (${currentPhotoUrl}), but no valid public ID could be extracted. Skipping Cloudinary deletion.`
+        );
+      }
     }
 
     // Get the MIME type of the uploaded file
@@ -387,8 +414,15 @@ const kycSetup = asyncHandler(async (req, res) => {
           }
 
           if (user) {
-            const { address, phone, accounttype, package, currency, photo, pin } =
-              user;
+            const {
+              address,
+              phone,
+              accounttype,
+              package,
+              currency,
+              photo,
+              pin,
+            } = user;
 
             const updateAddress = {
               address: req.body.userData.address,
@@ -520,11 +554,48 @@ const idVerificationUpload = asyncHandler(async (req, res) => {
     const CurrenctFrontId = user.idVerificationPhoto.front;
     const CurrenctBackId = user.idVerificationPhoto.back;
 
-    if (CurrenctFrontId && CurrenctBackId) {
-      const currenctFrontId = getPublicIdFromUrl(CurrenctFrontId);
-      cloudinary.uploader.destroy(currenctFrontId); // Delete the old id front
-      const currenctBackId = getPublicIdFromUrl(CurrenctBackId);
-      cloudinary.uploader.destroy(currenctBackId); // Delete the old id back
+    // Check if the current ID URLs exist before attempting any deletion
+    if (CurrenctFrontId || CurrenctBackId) {
+      // --- FRONT ID DELETION ---
+      if (CurrenctFrontId) {
+        const currenctFrontId = getPublicIdFromUrl(CurrenctFrontId);
+        if (currenctFrontId && currenctFrontId.trim().length > 0) {
+          try {
+            await cloudinary.uploader.destroy(currenctFrontId); // Delete the old id front
+            console.log(
+              `Successfully deleted old front ID: ${currenctFrontId}`
+            );
+          } catch (error) {
+            console.warn(
+              `Cloudinary deletion failed for front ID: ${currenctFrontId}. Error: ${error.message}`
+            );
+          }
+        } else {
+          console.warn(
+            `Skipping front ID deletion: Could not extract valid public_id from URL: ${CurrenctFrontId}`
+          );
+        }
+      }
+
+      // --- BACK ID DELETION ---
+      if (CurrenctBackId) {
+        const currenctBackId = getPublicIdFromUrl(CurrenctBackId);
+
+        if (currenctBackId && currenctBackId.trim().length > 0) {
+          try {
+            await cloudinary.uploader.destroy(currenctBackId); // Delete the old id back
+            console.log(`Successfully deleted old back ID: ${currenctBackId}`);
+          } catch (error) {
+            console.warn(
+              `Cloudinary deletion failed for back ID: ${currenctBackId}. Error: ${error.message}`
+            );
+          }
+        } else {
+          console.warn(
+            `Skipping back ID deletion: Could not extract valid public_id from URL: ${CurrenctBackId}`
+          );
+        }
+      }
     }
 
     // Update the user's ID verification photo
@@ -540,35 +611,37 @@ const idVerificationUpload = asyncHandler(async (req, res) => {
     });
 
     // Send User uploaded new ID Notification Email to admin
-const introMessage = `This user ${user.firstname+" "+user.lastname} with email address ${user.email} is requesting an ID Verification`
+    const introMessage = `This user ${
+      user.firstname + " " + user.lastname
+    } with email address ${user.email} is requesting an ID Verification`;
 
-  const subjectAdmin = "ID Verification Request - corexcapital"
-  const send_to_Admin = process.env.EMAIL_USER
-  const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-  const reply_toAdmin = "no_reply@corexcapital.net"
+    const subjectAdmin = "ID Verification Request - corexcapital";
+    const send_to_Admin = process.env.EMAIL_USER;
+    const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage);
+    const reply_toAdmin = "no_reply@corexcapital.net";
 
-  await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
+    await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
+    //send dashboard notification message object to admin
 
-     //send dashboard notification message object to admin
-
-     const searchWord = "Support Team";
-     const notificationObject = {
+    const searchWord = "Support Team";
+    const notificationObject = {
       to: searchWord,
-      from: `${user.firstname+" "+user.lastname}`,
+      from: `${user.firstname + " " + user.lastname}`,
       notificationIcon: "CurrencyCircleDollar",
       title: "ID Verification Request",
-      message: ` ${user.firstname+" "+user.lastname} with email address ${user.email} is requesting ID verification`,
+      message: ` ${user.firstname + " " + user.lastname} with email address ${
+        user.email
+      } is requesting ID verification`,
       route: "/dashboard",
     };
-  
+
     // Add the Notifications
     await Notifications.updateOne(
       { userId: user._id },
       { $push: { notifications: notificationObject } },
       { upsert: true } // Creates a new document if recipient doesn't exist
     );
-
 
     res.status(200).json({
       data: updatedUser,
@@ -601,48 +674,47 @@ const loginUser = asyncHandler(async (req, res) => {
   //User exists, check if password is correct
   const passwordIsCorrect = password === user.password;
 
-
-  if(user.isTwoFactorEnabled === true && passwordIsCorrect) {
-
+  if (user.isTwoFactorEnabled === true && passwordIsCorrect) {
     const new_otp = otpGenerator.generate(4, {
       upperCaseAlphabets: false,
       specialChars: false,
       lowerCaseAlphabets: false,
     });
-  
+
     const otpExpires = Date.now() + 15 * 60 * 1000; // 15 Mins after otp is sent
-  
+
     // Update OTP and expiration time
     user.otp = new_otp.toString();
     user.otpExpires = otpExpires;
-  
+
     // Save changes
     await user.save({ validateModifiedOnly: true });
-  
+
     console.log("2FA OTP CODE", new_otp);
 
-     // Send 2FA OTP Email to the user
-  const subject = "OTP CODE - corexcapital"
-  const send_to = user.email
-  const template = twoFaOtpEmailTemplate(user.firstname+" "+user.lastname, new_otp)
-  const reply_to = process.env.EMAIL_USER
+    // Send 2FA OTP Email to the user
+    const subject = "OTP CODE - corexcapital";
+    const send_to = user.email;
+    const template = twoFaOtpEmailTemplate(
+      user.firstname + " " + user.lastname,
+      new_otp
+    );
+    const reply_to = process.env.EMAIL_USER;
 
-  await sendEmail(subject, send_to, template, reply_to)
+    await sendEmail(subject, send_to, template, reply_to);
 
-   return res.status(201).json({
-    type: "2faAuthentication",
-    data: user.email,
-    message: `OTP Code Sent to your email ${user.email} and expires in 15mins`,
-  });
-
+    return res.status(201).json({
+      type: "2faAuthentication",
+      data: user.email,
+      message: `OTP Code Sent to your email ${user.email} and expires in 15mins`,
+    });
   }
 
   //Generate token
   const token = generateToken(user._id);
   if (user && passwordIsCorrect) {
-
     user.pinRequired = false;
-    await user.save()
+    await user.save();
 
     const newUser = await User.findOne({ email }).select("-password");
     res.cookie("token", token, {
@@ -722,7 +794,6 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
-
 //update user photo
 // const updatePhoto = asyncHandler(async (req, res) => {
 //   const { photo } = req.body;
@@ -731,8 +802,6 @@ const updateUser = asyncHandler(async (req, res) => {
 //   const updatedUser = await user.save();
 //   res.status(200).json(updatedUser);
 // });
-
-
 
 //updatePhoto
 const updatePhoto = asyncHandler(async (req, res) => {
@@ -745,7 +814,6 @@ const updatePhoto = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
-
 
   // console.log("File received in controller:", req.file);
 
@@ -778,7 +846,7 @@ const updatePhoto = asyncHandler(async (req, res) => {
     // If the current photo exists, delete it from Cloudinary
     if (currentPhotoUrl) {
       const publicId = getPublicIdFromUrl(currentPhotoUrl);
-      cloudinary.uploader.destroy(publicId); // Delete the old image
+      await cloudinary.uploader.destroy(publicId); // Delete the old image
     }
 
     // Get the MIME type of the uploaded file
@@ -820,7 +888,7 @@ const updatePhoto = asyncHandler(async (req, res) => {
           }
 
           if (user) {
-            const {  photo } = user;
+            const { photo } = user;
 
             user.photo = result.secure_url || photo;
 
@@ -841,7 +909,6 @@ const updatePhoto = asyncHandler(async (req, res) => {
     res.status(500).json({ message: err.message || "Failed to upload image" });
   }
 });
-
 
 // updatePinRequired
 const updatePinRequired = asyncHandler(async (req, res) => {
@@ -893,7 +960,7 @@ const getAllCoins = asyncHandler(async (req, res) => {
     url: url,
     headers: {
       accept: "application/json",
-      'x-cg-demo-api-key': process.env.COINGECKO_API_KEY
+      "x-cg-demo-api-key": process.env.COINGECKO_API_KEY,
       // "x-cg-demo-api-key": "12345",
     },
   };
@@ -1070,7 +1137,7 @@ const adminUpdateUser = asyncHandler(async (req, res) => {
       accounttype,
       pinRequired,
       password,
-      isTwoFactorEnabled
+      isTwoFactorEnabled,
     } = user;
 
     user.firstname = req.body.firstname || firstname;
@@ -1128,7 +1195,6 @@ const changePassword = asyncHandler(async (req, res) => {
   // );
 
   const passwordIsCorrect = currentPassword === user.password;
-
 
   if (!passwordIsCorrect) {
     res.status(400);
@@ -1215,12 +1281,12 @@ const adminFundTradeBalance = asyncHandler(async (req, res) => {
   //send notification message object to user
   const searchWord = "Support Team";
   const notificationObject = {
-    to: `${updatedUser.firstname+" "+updatedUser.lastname}`,
+    to: `${updatedUser.firstname + " " + updatedUser.lastname}`,
     from: searchWord,
     notificationIcon: "CurrencyCircleDollar",
     title: "Account Credit",
     message: `Your account has been credited with ${amount} ${updatedUser.currency.code}`,
-    route: "/dashboard"
+    route: "/dashboard",
   };
 
   // Add the Notifications
@@ -1264,12 +1330,12 @@ const adminDebitTradeBalance = asyncHandler(async (req, res) => {
   //notification message object
   const searchWord = "Support Team";
   const notificationObject = {
-    to: `${updatedUser.firstname+" "+updatedUser.lastname}`,
+    to: `${updatedUser.firstname + " " + updatedUser.lastname}`,
     from: searchWord,
     notificationIcon: "CurrencyCircleDollar",
     title: "Account Debit",
     message: `Your account has been debited with ${amount} ${updatedUser.currency.code}`,
-    route: "/dashboard"
+    route: "/dashboard",
   };
 
   // Add the Notifications
@@ -1596,7 +1662,7 @@ const adminDeleteAssetWalletFromUser = asyncHandler(async (req, res) => {
   // Delete wallet image from Cloudinary, if it exists
   if (walletToDelete.image) {
     const iconPublicId = getPublicIdFromUrl(walletToDelete.image);
-    cloudinary.uploader.destroy(iconPublicId); // Delete the wallet image
+    await cloudinary.uploader.destroy(iconPublicId); // Delete the wallet image
   }
 
   res.status(200).json({
@@ -1717,58 +1783,57 @@ const adminApproveId = asyncHandler(async (req, res) => {
   // Save the updated user
   const updatedUser = await user.save();
 
+  // Send approval status email to the user
+  const introMessage = `Your ID verification has been reviewed by our team and your ${message}`;
 
-   // Send approval status email to the user
-    const introMessage = `Your ID verification has been reviewed by our team and your ${message}`
-
-    const subject = "ID Approval Status - corexcapital"
-    const send_to = user.email
-    const template = userGeneralEmailTemplate(user.firstname+" "+user.lastname, introMessage)
-    const reply_to = process.env.EMAIL_USER
-
-    await sendEmail(subject, send_to, template, reply_to)
-
-
- if (status === "VERIFIED") {
-   
-  // Create a new inbox welcome message for user
-  const messages = [
-    {
-      to: user.email,
-      from: "Support Team",
-      subject: "Welcome to corexcapital",
-      content: `Hello ${user.firstname+" "+user.lastname}, We're excited to have you on board. corexcapital is an international investment company that combines the infrastructure and abilities of an investor with a best-in-class team of operations professionals. This unique combination of skills  has allowed us to become a top international Investment Platform.For more enquiry kindly contact your account manager or write directly with our live chat support on our platform or you can send a direct mail to us at support@corexcapital.net.`,
-    },
-  ];
-
-  await Mailbox.updateOne(
-    { userId: user._id },
-    { $push: { messages: messages } },
-    { upsert: true } // Creates a new document if recipient doesn't exist
+  const subject = "ID Approval Status - corexcapital";
+  const send_to = user.email;
+  const template = userGeneralEmailTemplate(
+    user.firstname + " " + user.lastname,
+    introMessage
   );
+  const reply_to = process.env.EMAIL_USER;
 
+  await sendEmail(subject, send_to, template, reply_to);
 
-   // Create a notification Account Activation object for user
-   const searchWord = "Support Team";
+  if (status === "VERIFIED") {
+    // Create a new inbox welcome message for user
+    const messages = [
+      {
+        to: user.email,
+        from: "Support Team",
+        subject: "Welcome to corexcapital",
+        content: `Hello ${
+          user.firstname + " " + user.lastname
+        }, We're excited to have you on board. corexcapital is an international investment company that combines the infrastructure and abilities of an investor with a best-in-class team of operations professionals. This unique combination of skills  has allowed us to become a top international Investment Platform.For more enquiry kindly contact your account manager or write directly with our live chat support on our platform or you can send a direct mail to us at support@corexcapital.net.`,
+      },
+    ];
 
-   const notificationObject = {
-     to: `${user.firstname+" "+user.lastname}`,
-     from: searchWord,
-     notificationIcon: "CurrencyCircleDollar",
-     title: "Account Activation",
-     message: `Your trade account has been activated successfully. Welcome to corexcapital`,
-     route: "/dashboard"
-   };
- 
-   // Add the Notifications
-   await Notifications.updateOne(
-     { userId: user._id  },
-     { $push: { notifications: notificationObject } },
-     { upsert: true } // Creates a new document if recipient doesn't exist
-   );
+    await Mailbox.updateOne(
+      { userId: user._id },
+      { $push: { messages: messages } },
+      { upsert: true } // Creates a new document if recipient doesn't exist
+    );
 
-  } 
-  
+    // Create a notification Account Activation object for user
+    const searchWord = "Support Team";
+
+    const notificationObject = {
+      to: `${user.firstname + " " + user.lastname}`,
+      from: searchWord,
+      notificationIcon: "CurrencyCircleDollar",
+      title: "Account Activation",
+      message: `Your trade account has been activated successfully. Welcome to corexcapital`,
+      route: "/dashboard",
+    };
+
+    // Add the Notifications
+    await Notifications.updateOne(
+      { userId: user._id },
+      { $push: { notifications: notificationObject } },
+      { upsert: true } // Creates a new document if recipient doesn't exist
+    );
+  }
 
   res.status(200).json({
     data: updatedUser,
@@ -2008,7 +2073,7 @@ const updateCustomizeEmailLogo = asyncHandler(async (req, res) => {
     // If the current photo exists, delete it from Cloudinary
     if (currentPhotoUrl) {
       const publicId = getPublicIdFromUrl(currentPhotoUrl);
-      cloudinary.uploader.destroy(publicId); // Delete the old image
+      await cloudinary.uploader.destroy(publicId); // Delete the old image
     }
 
     // Get the MIME type of the uploaded file
@@ -2094,20 +2159,25 @@ const adminSendCustomizedMail = asyncHandler(async (req, res) => {
     throw new Error(errors.array()[0].msg);
   }
 
+  // Send customized Email Link to the user
 
-   // Send customized Email Link to the user
+  const introMessage = req.body.content;
 
-   const introMessage = req.body.content
+  const subject = req.body.subject;
+  const send_to = req.body.to;
+  const template = sendCustomizeEmailTemplate(req.body.fullName, introMessage);
+  const reply_to = "no-reply@corexcapital.net";
+  const customizedLogo = req.body.customizedLogo;
 
-   const subject = req.body.subject
-   const send_to = req.body.to
-   const template = sendCustomizeEmailTemplate(req.body.fullName, introMessage)
-   const reply_to = "no-reply@corexcapital.net"
-   const customizedLogo = req.body.customizedLogo
+  await sendCustomizedEmail(
+    subject,
+    send_to,
+    template,
+    reply_to,
+    customizedLogo
+  );
 
-   await sendCustomizedEmail(subject, send_to, template, reply_to, customizedLogo)
-
-   res.status(200).json({
+  res.status(200).json({
     message: `Message sent to ${send_to} successfully`,
     // message,
   });
@@ -2151,24 +2221,23 @@ const adminAddGiftReward = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "User not found" });
   }
 
-   //send Gift notification message object to user
-   const searchWord = "Support Team";
-   const notificationObject = {
-     to: `This user`,
-     from: searchWord,
-     notificationIcon: "CurrencyCircleDollar",
-     title: "Gift Reward",
-     message: `Congratulations! you have been gifted a gift reward of ${amount} ${updatedUser.currency.code}. please check the rewards section to claim`,
-     route: "/dashboard"
-   };
- 
-   // Add the Notifications
-   await Notifications.updateOne(
-     { userId },
-     { $push: { notifications: notificationObject } },
-     { upsert: true } // Creates a new document if recipient doesn't exist
-   );
- 
+  //send Gift notification message object to user
+  const searchWord = "Support Team";
+  const notificationObject = {
+    to: `This user`,
+    from: searchWord,
+    notificationIcon: "CurrencyCircleDollar",
+    title: "Gift Reward",
+    message: `Congratulations! you have been gifted a gift reward of ${amount} ${updatedUser.currency.code}. please check the rewards section to claim`,
+    route: "/dashboard",
+  };
+
+  // Add the Notifications
+  await Notifications.updateOne(
+    { userId },
+    { $push: { notifications: notificationObject } },
+    { upsert: true } // Creates a new document if recipient doesn't exist
+  );
 
   return res.status(200).json({
     data: updatedUser,
@@ -2278,9 +2347,6 @@ const adminLockAccount = asyncHandler(async (req, res) => {
   res.status(200).json(user);
 });
 
-
-
-
 // adminDeleteUser
 const adminDeleteUser = asyncHandler(async (req, res) => {
   const userId = req.params.id;
@@ -2304,7 +2370,9 @@ const adminDeleteUser = asyncHandler(async (req, res) => {
 
     // Delete the user's idVerificationPhoto (front and back) from Cloudinary, if they exist
     if (user.idVerificationPhoto?.front) {
-      const userIdVeriFront = getPublicIdFromUrl(user.idVerificationPhoto.front);
+      const userIdVeriFront = getPublicIdFromUrl(
+        user.idVerificationPhoto.front
+      );
       await cloudinary.uploader.destroy(userIdVeriFront);
     }
     if (user.idVerificationPhoto?.back) {
@@ -2315,8 +2383,8 @@ const adminDeleteUser = asyncHandler(async (req, res) => {
     // Delete all deposit & depositProofs associated with the user and their database records
     const userDeposits = await Deposit.find({ userId });
     const depositProofs = userDeposits
-      .filter(deposit => deposit.depositProof)
-      .map(deposit => getPublicIdFromUrl(deposit.depositProof));
+      .filter((deposit) => deposit.depositProof)
+      .map((deposit) => getPublicIdFromUrl(deposit.depositProof));
 
     for (const publicId of depositProofs) {
       if (publicId) {
@@ -2344,41 +2412,33 @@ const adminDeleteUser = asyncHandler(async (req, res) => {
 
   // Fetch all remaining users
   const allUsers = await User.find().sort("-createdAt");
-  res.status(200).json({ data: allUsers, message: "User deleted successfully" });
+  res
+    .status(200)
+    .json({ data: allUsers, message: "User deleted successfully" });
 });
 
-
-
-//contactUs 
+//contactUs
 const contactUs = asyncHandler(async (req, res) => {
-  const {
-    firstname,
-    lastname,
-    email,
-    subject,
-    message,
-  } = req.body;
+  const { firstname, lastname, email, subject, message } = req.body;
 
   // Validate
-  if (!firstname || !lastname || !email || !subject || !message ) {
+  if (!firstname || !lastname || !email || !subject || !message) {
     res.status(400);
     throw new Error("fill in all the required fields");
   }
 
-
-    // Send connect wallet request email to admin
-    const introMessage = `This user ${firstname + " " + lastname}
+  // Send connect wallet request email to admin
+  const introMessage = `This user ${firstname + " " + lastname}
     with email address ${email}<br><br>
     sent a contact us message.<br><br>
      Message: " ${message} " `;
 
-    const subjectAdmin = "Contact Us - corexcapital"
-    const send_to_Admin = process.env.EMAIL_USER
-    const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-    const reply_toAdmin = "no_reply@corexcapital.net"
+  const subjectAdmin = "Contact Us - corexcapital";
+  const send_to_Admin = process.env.EMAIL_USER;
+  const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage);
+  const reply_toAdmin = "no_reply@corexcapital.net";
 
-    await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
-
+  await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
   //  //send connect wallet notification message object to admin
   //  const searchWord = "Support Team";
@@ -2400,7 +2460,6 @@ const contactUs = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Message Sent Successfully" });
 });
-
 
 //change Lock Pin
 const changePin = asyncHandler(async (req, res) => {
@@ -2422,7 +2481,7 @@ const changePin = asyncHandler(async (req, res) => {
   }
 
   //User exists, check if pin match is correct
-  if (currentPin !== user.pin ) {
+  if (currentPin !== user.pin) {
     res.status(400);
     throw new Error("Current Pin is incorrect");
   }
@@ -2442,44 +2501,33 @@ const changePin = asyncHandler(async (req, res) => {
   }
 });
 
-
-
-//requestCard 
+//requestCard
 const requestCard = asyncHandler(async (req, res) => {
-  const {
-    firstname,
-    lastname,
-    email,
-    phone,
-    country,
-    cardType,
-  } = req.body;
+  const { firstname, lastname, email, phone, country, cardType } = req.body;
 
   // Validate
-  if (!firstname || !lastname || !email || !phone || !country || !cardType ) {
+  if (!firstname || !lastname || !email || !phone || !country || !cardType) {
     res.status(400);
     throw new Error("fill in all the required fields");
   }
 
-
-    // Send card request email to admin
-    const introMessage = `This user ${firstname + " " + lastname}
+  // Send card request email to admin
+  const introMessage = `This user ${firstname + " " + lastname}
     with email address ${email}<br><br>
     is requesting for a ${cardType}.<br>`;
 
-    const subjectAdmin = `${cardType} Request - corexcapital`
-    const send_to_Admin = process.env.EMAIL_USER
-    const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-    const reply_toAdmin = "no_reply@corexcapital.net"
+  const subjectAdmin = `${cardType} Request - corexcapital`;
+  const send_to_Admin = process.env.EMAIL_USER;
+  const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage);
+  const reply_toAdmin = "no_reply@corexcapital.net";
 
-    await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
+  await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
-
-  res.status(200).json({ message: "Message sent successfully, you will be contacted shortly." });
+  res.status(200).json({
+    message: "Message sent successfully, you will be contacted shortly.",
+  });
   // res.status(200).json(withdrawalHistory);
 });
-
-
 
 //forgotPassword
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -2491,12 +2539,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 
   // Construct query to find user by email
-  const user = await User.findOne({email});
+  const user = await User.findOne({ email });
 
   if (user) {
-
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
     const tokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
 
     // Update OTP and expiration time
@@ -2505,34 +2555,31 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     // Save changes
     await user.save({ validateModifiedOnly: true });
-    
-    
+
     // Send Forget Email Link to the user
 
-    const resetPasswordLink = `https://corexcapital.net/auth/reset-password/${resetToken}`
+    const resetPasswordLink = `https://corexcapital.net/auth/reset-password/${resetToken}`;
 
-    const subject = "Reset Password - corexcapital"
-    const send_to = user.email
-    const template = resetPasswordEmailTemplate(user.firstname+" "+user.lastname, resetPasswordLink)
-    const reply_to = "no-reply@corexcapital.net"
+    const subject = "Reset Password - corexcapital";
+    const send_to = user.email;
+    const template = resetPasswordEmailTemplate(
+      user.firstname + " " + user.lastname,
+      resetPasswordLink
+    );
+    const reply_to = "no-reply@corexcapital.net";
 
-    await sendEmail(subject, send_to, template, reply_to)
-
+    await sendEmail(subject, send_to, template, reply_to);
   }
-
 
   res.status(200).json({
     data: "",
-    message: "If an account with that email exists, we have sent a password reset email.",
+    message:
+      "If an account with that email exists, we have sent a password reset email.",
   });
 });
 
-
-
-
 //resetPassword
 const resetPassword = asyncHandler(async (req, res) => {
-
   const { token, newPassword } = req.body;
 
   if (!token || !newPassword) {
@@ -2542,9 +2589,9 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   // Hash the token provided by the user
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-  
-   // Find user with matching hashed token and check expiry
-   const user = await User.findOne({
+
+  // Find user with matching hashed token and check expiry
+  const user = await User.findOne({
     resetToken: hashedToken,
     tokenExpiry: { $gt: Date.now() },
   });
@@ -2555,7 +2602,6 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 
   if (user) {
-
     if (newPassword.length < 6) {
       res.status(400);
       throw new Error("Password must be up to 6 characters");
@@ -2569,46 +2615,33 @@ const resetPassword = asyncHandler(async (req, res) => {
     await user.save();
 
     // console.log("Password reseted successfully")
-
-  } 
+  }
 
   res.status(201).json("Password Changed Successfully.");
 });
 
-
-
-//upgradeAccount 
+//upgradeAccount
 const upgradeAccount = asyncHandler(async (req, res) => {
-  const {
-    firstname,
-    lastname,
-    email,
-    selectedPackage,
-    comment,
-  } = req.body;
+  const { firstname, lastname, email, selectedPackage, comment } = req.body;
 
   // Validate
-  if (!firstname || !lastname || !email || !selectedPackage ) {
+  if (!firstname || !lastname || !email || !selectedPackage) {
     res.status(400);
     throw new Error("fill in all the required fields");
   }
 
-
-    // Send connect wallet request email to admin
-    const introMessage = `This user ${firstname + " " + lastname}
+  // Send connect wallet request email to admin
+  const introMessage = `This user ${firstname + " " + lastname}
     with email address ${email}<br><br>
     wishes to UPGRADE his account to ${selectedPackage} Package.<br><br>
      Comment: " ${comment} " `;
 
-    const subjectAdmin = "Upgrade Account - corexcapital"
-    const send_to_Admin = process.env.EMAIL_USER
-    const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-    const reply_toAdmin = "no_reply@corexcapital.com"
+  const subjectAdmin = "Upgrade Account - corexcapital";
+  const send_to_Admin = process.env.EMAIL_USER;
+  const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage);
+  const reply_toAdmin = "no_reply@corexcapital.com";
 
-    await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
-
-
-
+  await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
   //  //send connect wallet notification message object to admin
   //  const searchWord = "Support Team";
@@ -2630,12 +2663,6 @@ const upgradeAccount = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Message Sent Successfully" });
 });
-
-
-
-
-
-
 
 module.exports = {
   registerUser,
@@ -2692,5 +2719,5 @@ module.exports = {
   adminDeleteGiftReward,
   UserClaimReward,
   adminLockAccount,
-  adminDeleteUser
+  adminDeleteUser,
 };

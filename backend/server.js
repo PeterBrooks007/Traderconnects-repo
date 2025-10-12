@@ -82,39 +82,20 @@ app.get("/", (req, res) => {
 app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
+
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   })
   .catch((err) => {
-    console.error(
-      "Initial MongoDB connection FAILED and will NOT retry:",
-      err.message
-    );
-    // process.exit(1); // Ensure process stops on DB failure
+    console.error("MongoDB connection failed:", err);
+    process.exit(1); // Ensure process stops on DB failure
   });
-
-// *** ADD THESE EVENT LISTENERS ***
-
-mongoose.connection.on("error", (err) => {
-  // Logs any error that occurs AFTER the initial successful connection
-  console.error("MongoDB Runtime Error:", err.message);
-  // The Mongoose driver will automatically try to reconnect
-});
-
-mongoose.connection.on("disconnected", () => {
-  console.warn("MongoDB connection lost. Attempting to reconnect...");
-  // You could send a notification here, but DO NOT call process.exit(1)
-});
-
-mongoose.connection.on("reconnected", () => {
-  console.log("MongoDB successfully reconnected.");
-});
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 //Socket.io starts
 io.on("connection", (socket) => {
@@ -150,7 +131,7 @@ io.on("connection", (socket) => {
         { socketId: socket.id },
         { isOnline: false, lastSeen: new Date() },
         { new: true } // Return the updated document
-      );
+      )
       if (user) {
         //send back all users to admin
         const allUsers = await User.find().sort("-createdAt");
@@ -170,19 +151,12 @@ io.on("connection", (socket) => {
   });
 });
 
-// process.on("unhandledRejection", (err) => {
-//   console.log(err);
-//   server.close(() => {
-//     io.close();
-//     process.exit(1);
-//   });
-// });
-
 process.on("unhandledRejection", (err) => {
-  console.error("UNHANDLED REJECTION DETECTED:", err.message); // Use console.error
-  // Do NOT call process.exit(1) here.
-  // We rely on Mongoose to reconnect. Log and let Mongoose handle the retry logic.
-  // If the server must close, let the Mongoose 'disconnected' event handle it.
+  console.log(err);
+  server.close(() => {
+    io.close();
+    process.exit(1);
+  });
 });
 
 process.on("SIGINT", () => {
