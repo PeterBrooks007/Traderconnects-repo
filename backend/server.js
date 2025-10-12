@@ -23,10 +23,10 @@ const User = require("./models/userModel");
 
 const { Server } = require("socket.io");
 
-process.on("uncaughtException", (err) => {
-  console.log(err);
-  process.exit(1);
-});
+// process.on("uncaughtException", (err) => {
+//   console.log(err);
+//   process.exit(1);
+// });
 
 const http = require("http");
 
@@ -151,27 +151,27 @@ io.on("connection", (socket) => {
   });
 });
 
-process.on("unhandledRejection", (err) => {
-  console.log(err);
-  server.close(() => {
-    io.close();
-    process.exit(1);
-  });
-});
+// process.on("unhandledRejection", (err) => {
+//   console.log(err);
+//   server.close(() => {
+//     io.close();
+//     process.exit(1);
+//   });
+// });
 
-process.on("SIGINT", () => {
-  console.log("Server shutting down...");
-  server.close(() => {
-    io.close();
-    console.log("Server closed");
-    process.exit(0);
-  });
-});
-process.on("SIGTERM", () => {
-  console.log("Server shutting down...");
-  server.close(() => {
-    io.close();
-    console.log("Server closed");
-    process.exit(0);
-  });
-});
+// process.on("SIGINT", () => {
+//   console.log("Server shutting down...");
+//   server.close(() => {
+//     io.close();
+//     console.log("Server closed");
+//     process.exit(0);
+//   });
+// });
+// process.on("SIGTERM", () => {
+//   console.log("Server shutting down...");
+//   server.close(() => {
+//     io.close();
+//     console.log("Server closed");
+//     process.exit(0);
+//   });
+// });
