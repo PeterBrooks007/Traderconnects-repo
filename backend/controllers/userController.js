@@ -410,6 +410,7 @@ const kycSetup = asyncHandler(async (req, res) => {
         { resource_type: "auto", folder: folderName },
         async (error, result) => {
           if (error) {
+            console.log("cloudinary error1", error);
             return res.status(500).json({ error: "Image upload failed" });
           }
 
@@ -451,6 +452,8 @@ const kycSetup = asyncHandler(async (req, res) => {
 
             return res.status(200).json(updatedUser);
           } else {
+            console.log("cloudinary error2", error);
+
             res.status(404);
             throw new Error("User not found");
           }
@@ -458,6 +461,7 @@ const kycSetup = asyncHandler(async (req, res) => {
       )
       .end(compressedImageBuffer); // Use the file buffer for the upload
   } catch (err) {
+    console.log("cloudinary error3", err);
     res.status(500).json({ message: err.message || "Failed to upload image" });
   }
 });
