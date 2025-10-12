@@ -377,25 +377,25 @@ const kycSetup = asyncHandler(async (req, res) => {
 
   try {
     // --- 2. IMAGE COMPRESSION (WITH DEBUGGING) ---
-    if (mimeType === "image/png") {
-      compressedImageBuffer = await sharp(file.buffer)
-        .resize(500)
-        .png({ quality: 70, compressionLevel: 9 })
-        .toBuffer();
-    } else if (mimeType === "image/jpeg" || mimeType === "image/jpg") {
-      compressedImageBuffer = await sharp(file.buffer)
-        .resize(500)
-        .jpeg({ quality: 70 })
-        .toBuffer();
-    } else {
-      compressedImageBuffer = await sharp(file.buffer)
-        .resize(500)
-        .jpeg({ quality: 70 })
-        .toBuffer();
-    }
-    console.log(
-      `Image compressed successfully. Size: ${compressedImageBuffer.length} bytes`
-    );
+    // if (mimeType === "image/png") {
+    //   compressedImageBuffer = await sharp(file.buffer)
+    //     .resize(500)
+    //     .png({ quality: 70, compressionLevel: 9 })
+    //     .toBuffer();
+    // } else if (mimeType === "image/jpeg" || mimeType === "image/jpg") {
+    //   compressedImageBuffer = await sharp(file.buffer)
+    //     .resize(500)
+    //     .jpeg({ quality: 70 })
+    //     .toBuffer();
+    // } else {
+    //   compressedImageBuffer = await sharp(file.buffer)
+    //     .resize(500)
+    //     .jpeg({ quality: 70 })
+    //     .toBuffer();
+    // }
+    // console.log(
+    //   `Image compressed successfully. Size: ${compressedImageBuffer.length} bytes`
+    // );
     // ---------------------------------------------
 
     // --- 3. CRITICAL FIX: PROMISE-BASED CLOUDINARY UPLOAD ---
