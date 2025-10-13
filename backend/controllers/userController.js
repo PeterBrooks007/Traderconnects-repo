@@ -352,27 +352,7 @@ const kycSetup = asyncHandler(async (req, res) => {
     // If the current photo exists, delete it from Cloudinary
     if (currentPhotoUrl) {
       const publicId = getPublicIdFromUrl(currentPhotoUrl);
-
-      // ✅ FIX 1: Add a robust check for publicId
-      if (
-        publicId &&
-        typeof publicId === "string" &&
-        publicId.trim().length > 0
-      ) {
-        try {
-          await cloudinary.uploader.destroy(publicId); // Delete the old image
-          console.log(`Successfully deleted old Cloudinary photo: ${publicId}`);
-        } catch (deletionError) {
-          console.warn(
-            `Cloudinary deletion failed for ID ${publicId}. Likely already deleted or non-existent. Error: ${deletionError.message}`
-          );
-        }
-      } else {
-        // Log a warning if a photo URL existed but a publicId couldn't be extracted.
-        console.warn(
-          `Photo URL existed (${currentPhotoUrl}), but no valid public ID could be extracted. Skipping Cloudinary deletion.`
-        );
-      }
+      cloudinary.uploader.destroy(publicId); // Delete the old image
     }
 
     // Get the MIME type of the uploaded file
@@ -414,15 +394,8 @@ const kycSetup = asyncHandler(async (req, res) => {
           }
 
           if (user) {
-            const {
-              address,
-              phone,
-              accounttype,
-              package,
-              currency,
-              photo,
-              pin,
-            } = user;
+            const { address, phone, accounttype, package, currency, photo, pin } =
+              user;
 
             const updateAddress = {
               address: req.body.userData.address,
