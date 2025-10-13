@@ -43,7 +43,7 @@ const io = new Server(server, {
 
 //MiddleWares
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(
   cors({
     origin: [
@@ -55,7 +55,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 //Route
 app.use("/api/users", userRoute);
