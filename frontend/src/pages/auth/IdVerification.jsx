@@ -18,6 +18,7 @@ import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { idVerificationUpload, RESET_AUTH } from "../../redux/features/auth/authSlice";
 import LoadingScreen from "../../components/LoadingScreen";
+import LoadingScreen2 from "../../components/LoadingScreen2";
 
 const MotionBox = motion(Box);
 
@@ -157,7 +158,7 @@ const IdVerification = ({ handleNext, activeStep, setActiveStep, handleBack, ste
 
     <>
       {isSemiLoading ? (
-        <LoadingScreen />
+        <LoadingScreen2 />
       ) : (
 
     <Container maxWidth="md">
