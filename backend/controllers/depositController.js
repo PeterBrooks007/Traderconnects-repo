@@ -11,9 +11,7 @@ const {
 } = require("../emailTemplates/adminGeneralEmailTemplate");
 const sendEmail = require("../utils/sendEmail");
 const Notifications = require("../models/notificationsModel");
-const {
-  userGeneralEmailTemplate,
-} = require("../emailTemplates/userGeneralEmailTemplate");
+const { userGeneralEmailTemplate } = require("../emailTemplates/userGeneralEmailTemplate");
 
 //Deposit Fund
 const depositFund = asyncHandler(async (req, res) => {
@@ -276,7 +274,7 @@ const getAllPendingDepositRequest = asyncHandler(async (req, res) => {
 });
 
 //Admin Approve Deposit Request
-export const approveDepositRequest = asyncHandler(async (req, res) => {
+const approveDepositRequest = asyncHandler(async (req, res) => {
   const requestId = req.params.id;
 
   // Fetch deposit and populate user info
@@ -331,8 +329,7 @@ export const approveDepositRequest = asyncHandler(async (req, res) => {
   }
 
   // Update deposit details
-  const { typeOfDeposit, method, amount, status, depositProof } =
-    depositRequest;
+  const { typeOfDeposit, method, amount, status, depositProof } = depositRequest;
 
   depositRequest.typeOfDeposit = req.body.typeOfDeposit || typeOfDeposit;
   depositRequest.method = req.body.method || method;
@@ -348,7 +345,7 @@ export const approveDepositRequest = asyncHandler(async (req, res) => {
   }
 
   // Create notification
-  const searchWord = "Support Team";
+    const searchWord = "Support Team";
   const notificationObject = {
     to: `This user`,
     from: searchWord,
