@@ -11,7 +11,9 @@ const {
 } = require("../emailTemplates/adminGeneralEmailTemplate");
 const sendEmail = require("../utils/sendEmail");
 const Notifications = require("../models/notificationsModel");
-const { userGeneralEmailTemplate } = require("../emailTemplates/userGeneralEmailTemplate");
+const {
+  userGeneralEmailTemplate,
+} = require("../emailTemplates/userGeneralEmailTemplate");
 
 //Deposit Fund
 const depositFund = asyncHandler(async (req, res) => {
@@ -329,7 +331,8 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
   }
 
   // Update deposit details
-  const { typeOfDeposit, method, amount, status, depositProof } = depositRequest;
+  const { typeOfDeposit, method, amount, status, depositProof } =
+    depositRequest;
 
   depositRequest.typeOfDeposit = req.body.typeOfDeposit || typeOfDeposit;
   depositRequest.method = req.body.method || method;
@@ -345,7 +348,7 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
   }
 
   // Create notification
-    const searchWord = "Support Team";
+  const searchWord = "Support Team";
   const notificationObject = {
     to: `This user`,
     from: searchWord,
@@ -364,7 +367,7 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
 
   // Send email notification
   try {
-    const introMessage = `Your deposit request of ${amount} has been updated. Please check your deposit history.`;
+    const introMessage = `Your deposit request of ${amount} ${user.currency.code} has been updated. Please check your deposit history.`;
     const subject = "Deposit Approval Status - corexcapital";
     const send_to = user.email;
     const template = userGeneralEmailTemplate(
