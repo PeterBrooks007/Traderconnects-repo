@@ -367,7 +367,21 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
 
   // Send email notification
   try {
-    const introMessage = `Your deposit request of ${amount} ${user.currency.code} has been updated. Please check your deposit history.`;
+
+    let introMessage;
+    if (req.body.status === "APPROVED" && req.body.comment === "ApproveWithBalance") {
+      introMessage = `Your deposit request of ${amount} ${user.currency.code} with ${method} deposit method has been confirmed and amount credited to your account successfully. Please check your deposit history.`;
+
+    }
+    if (req.body.status === "APPROVED" && req.body.comment === "ApproveWithoutBalance") {
+      introMessage = `Your deposit request of ${amount} ${user.currency.code} with ${method} deposit method has been Confirmed. Please check your deposit history.`;
+    }
+
+    if (req.body.status === "NOT-APPROVED") {
+      introMessage = `Your deposit request of ${amount} ${user.currency.code} with ${method} deposit method was NOT APPROVED. Please check your deposit history.`;
+    }
+
+    
     const subject = "Deposit Approval Status - corexcapital";
     const send_to = user.email;
     const template = userGeneralEmailTemplate(

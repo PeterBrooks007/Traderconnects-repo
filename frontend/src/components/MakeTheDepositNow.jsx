@@ -474,6 +474,8 @@ const MakeTheDepositNow = ({
             amount={amount}
             Wallet={Wallet}
             savedSession={savedSession}
+           setSelectedWallet={setSelectedWallet}
+
           />
         </>
       )}

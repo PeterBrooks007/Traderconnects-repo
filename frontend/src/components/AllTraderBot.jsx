@@ -33,6 +33,9 @@ const AllTraderBot = () => {
   const size = UseWindowSize();
   const dispatch = useDispatch()
 
+    const { user } = useSelector((state) => state.auth);
+  
+
   const { isLoading, tradingBots } = useSelector((state) => state.tradingBots);
 
   
@@ -245,7 +248,7 @@ const AllTraderBot = () => {
                     Price:{" "}
                     {Intl.NumberFormat("en-US", {
                       style: "currency",
-                      currency: "USD",
+                    currency: user?.currency?.code || "USD",
                       ...(tradingBot?.price > 99999
                         ? { notation: "compact" }
                         : {}),
@@ -376,7 +379,7 @@ const AllTraderBot = () => {
              
               Price: { Intl.NumberFormat("en-US", {
                     style: "currency",
-                    currency: "USD",
+                    currency: user?.currency?.code || "USD",
                     ...(selectedBot?.price > 999999
                       ? { notation: "compact" }
                       : {}),

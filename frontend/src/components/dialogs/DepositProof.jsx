@@ -22,7 +22,7 @@ import {
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Camera, Image, X } from "@phosphor-icons/react";
-import proofIcon from "../../assets/proof_image.jpg"
+import proofIcon from "../../assets/proof_image.jpg";
 import zIndex from "@mui/material/styles/zIndex";
 
 const style = {
@@ -40,7 +40,15 @@ const initialState = {
   depositProof: "",
 };
 
-const DepositProof = ({ open, handleClose, amount, Wallet, handleOpen, savedSession }) => {
+const DepositProof = ({
+  open,
+  handleClose,
+  amount,
+  Wallet,
+  handleOpen,
+  savedSession,
+  setSelectedWallet,
+}) => {
   const size = UseWindowSize();
   const dispatch = useDispatch();
 
@@ -75,8 +83,21 @@ const DepositProof = ({ open, handleClose, amount, Wallet, handleOpen, savedSess
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleCancelSession = () => {
+    const savedSession = localStorage.getItem("depositSession");
 
-const handleFormSubmit = async (e) => {
+    if (!savedSession) {
+      return toast.info("No active deposit session to cancel.");
+    }
+
+    // Clear session data
+    localStorage.removeItem("depositSession");
+    // setCoinID(null);
+    setSelectedWallet(null); // Reset selected wallet if applicable
+    toast.error("Deposit session Ended.");
+  };
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     const userData = {
@@ -84,7 +105,6 @@ const handleFormSubmit = async (e) => {
       method: savedSession?.walletName,
       typeOfDeposit: savedSession?.typeOfDeposit,
       methodIcon: savedSession?.walletPhoto,
-
     };
     // setFormData(values);
 
@@ -138,11 +158,13 @@ const handleFormSubmit = async (e) => {
           await dispatch(depositFund(formData));
           await dispatch(getUserDeposithistory());
 
+          handleCancelSession();
+
           // console.log(formData)
 
           // Reset the image preview and loading state
           setFormData(initialState);
-          handleClose()
+          handleClose();
           setUploadLoading(false);
         } else {
           toast.error("No image selected.");
@@ -160,13 +182,13 @@ const handleFormSubmit = async (e) => {
   };
 
   return (
-    <Modal open={open} onClose={() => {
-      handleClose()
-      setImagePreview(null)
-      
-
-    }}
-    sx={{zIndex: 1402}}
+    <Modal
+      open={open}
+      onClose={() => {
+        handleClose();
+        setImagePreview(null);
+      }}
+      sx={{ zIndex: 1402 }}
     >
       <Stack
         spacing={1.5}
@@ -195,8 +217,8 @@ const handleFormSubmit = async (e) => {
             </Typography>
           </Stack>
           <IconButton
-          size="small"
-            sx={{ border: "1px solid grey"}}
+            size="small"
+            sx={{ border: "1px solid grey" }}
             onClick={handleClose}
           >
             <X size={20} color="grey" />
@@ -206,7 +228,9 @@ const handleFormSubmit = async (e) => {
         <Divider />
 
         <Stack spacing={2}>
-          <Typography color={"orange"}>Upload a proof of your deposit.</Typography>
+          <Typography color={"orange"}>
+            Upload a proof of your deposit.
+          </Typography>
 
           <Stack spacing={0.5}>
             <InputLabel htmlFor="my-input">Type of deposit</InputLabel>
@@ -250,7 +274,7 @@ const handleFormSubmit = async (e) => {
                       height: 30,
                       marginRight: 1, // Adjust spacing
                       border: "2px solid grey",
-                      borderRadius: "50%"
+                      borderRadius: "50%",
                     }}
                   />
                 </InputAdornment>
@@ -318,7 +342,7 @@ const handleFormSubmit = async (e) => {
                     style={{ display: "none" }} // Hide the file input
                     onChange={handleImageChange}
                   />
-                  <IconButton sx={{border: "2px solid grey"}}>
+                  <IconButton sx={{ border: "2px solid grey" }}>
                     <Camera size={35} weight="bold" color="grey" />
                   </IconButton>
                 </>
@@ -347,11 +371,18 @@ const handleFormSubmit = async (e) => {
             </Stack>
           </Stack>
 
-          <Button disabled={uploadLoading} sx={{backgroundColor: "green", color: "white"}} onClick={handleFormSubmit} variant="contained" size="large">
-            {
-              uploadLoading ? <CircularProgress size={30} /> : "Click to Upload Image" 
-            }
-            
+          <Button
+            disabled={uploadLoading}
+            sx={{ backgroundColor: "green", color: "white" }}
+            onClick={handleFormSubmit}
+            variant="contained"
+            size="large"
+          >
+            {uploadLoading ? (
+              <CircularProgress size={30} />
+            ) : (
+              "Click to Upload Image"
+            )}
           </Button>
         </Stack>
       </Stack>

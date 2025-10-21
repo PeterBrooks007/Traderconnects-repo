@@ -36,6 +36,9 @@ const AllTraderSignals = () => {
 
   const dispatch = useDispatch()
 
+        const { user } = useSelector((state) => state.auth);
+
+
   const { isLoading, tradingSignals } = useSelector((state) => state.tradingSignals);
 
   useEffect(() => {
@@ -251,7 +254,7 @@ const AllTraderSignals = () => {
                     Price:{" "}
                     {Intl.NumberFormat("en-US", {
                       style: "currency",
-                      currency: "USD",
+                    currency: user?.currency?.code || "USD",
                       ...(tradingSignal?.price > 99999
                         ? { notation: "compact" }
                         : {}),
@@ -382,7 +385,7 @@ const AllTraderSignals = () => {
              
               Price: { Intl.NumberFormat("en-US", {
                     style: "currency",
-                    currency: "USD",
+                    currency: user?.currency?.code || "USD",
                     ...(selectedSignal?.price > 999999
                       ? { notation: "compact" }
                       : {}),
