@@ -1,6 +1,7 @@
 const depositEmailTemplate = (name, amount, method, txid, dashboardLink) => {
   const email = {
     body: {
+      greeting: false,
       name,
       intro: `You have successfully Deposited *${amount}*  your account.`,
       table: {
@@ -21,7 +22,7 @@ const depositEmailTemplate = (name, amount, method, txid, dashboardLink) => {
         },
       },
       outro: `Don't recognize this activity? Reset your password immediately and contact support.`,
-      signature: 'Best Regards',
+      signature: "Best Regards",
     },
   };
   return email;
