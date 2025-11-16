@@ -37,9 +37,10 @@ const withdrawFund = asyncHandler(async (req, res) => {
   await User.findOneAndUpdate(
     { _id: req.user._id },
     {
-      $inc: { balance: -amount },
+      $inc: { balance: -amount, earnedTotal: -amount },
     }
   );
+
 
   //Save transaction
   const withdrawalHistory = await Withdrawal.create({
