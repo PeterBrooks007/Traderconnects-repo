@@ -36,7 +36,7 @@ const theme = useTheme();
       sx={{ borderTop: "0.5px solid darkgrey", padding: "10px" }}
       color={"white"}
     >
-      (c) Copyright © {new Date().getFullYear()} CoreXCapital, Inc.       
+      (c) Copyright © {new Date().getFullYear()} TraderConnects, Inc.       
       </Box>
     </>
   );

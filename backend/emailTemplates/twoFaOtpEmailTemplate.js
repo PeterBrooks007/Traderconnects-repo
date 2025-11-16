@@ -44,7 +44,7 @@ const twoFaOtpEmailTemplate = (name, otp) => {
 //           button: {
 //             color: "#386904", // Optional action button color
 //             text: "Go to dashboard",
-//             link: "https://corexcapital.net",
+//             link: "https://traderconnects.net",
 //           },
 //         },
 //         outro: "We thank you for your purchase",

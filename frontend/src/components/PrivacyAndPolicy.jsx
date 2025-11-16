@@ -38,7 +38,7 @@ function PrivacyAndPolicy() {
             1. Introduction
           </Typography>
           <Typography variant="body1" paragraph>
-            Welcome to CoreXCapital Platform. Your privacy is important to us.
+            Welcome to TraderConnects Platform. Your privacy is important to us.
             This privacy policy outlines how we collect, use, and protect your
             personal and financial data when you use our services for trading
             stocks, forex, and cryptocurrencies. By using our platform, you
@@ -219,9 +219,9 @@ function PrivacyAndPolicy() {
             practices, please contact us at:
           </Typography>
           <Typography variant="body1" paragraph>
-            CoreXCapital Investment
+            TraderConnects Investment
             <br />
-            Email: support@corexcapital.net
+            Email: support@TraderConnects.net
             <br />
             {/* Phone: [Your Contact Phone] */}
           </Typography>

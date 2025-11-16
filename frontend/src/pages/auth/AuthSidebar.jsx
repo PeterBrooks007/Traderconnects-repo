@@ -70,11 +70,11 @@ const AuthHeader = () => {
             }}
           >
             <Typography variant="h5" color={"white"} fontWeight={"700"}>
-              Core
+              Trader
             </Typography>
             <img src={LogoImg} alt="logo" width={40} />
             <Typography variant="h5" color={"white"} fontWeight={"700"}>
-              Capital
+              Connects
             </Typography>
           </Stack>
 

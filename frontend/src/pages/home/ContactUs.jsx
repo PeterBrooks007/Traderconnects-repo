@@ -285,7 +285,7 @@ const ContactUs = () => {
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Envelope size={22} />
                 <Typography variant="body1" sx={{ ml: 2 }}>
-                  support@corexcapital.net
+                  support@TraderConnects.net
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -332,7 +332,7 @@ const ContactUs = () => {
         backgroundColor="black"
         color={"white"}
       >
-        (c) Copyright © {new Date().getFullYear()} CoreXCapital, Inc.
+        (c) Copyright © {new Date().getFullYear()} TraderConnects, Inc.
       </Box>
     </>
   );

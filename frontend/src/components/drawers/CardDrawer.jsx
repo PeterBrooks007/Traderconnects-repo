@@ -474,7 +474,7 @@ const CardDrawer = ({ open, handleClose, handleOpen }) => {
                       <span style={{ color: "#009a4c", fontWeight: 600 }}>
                         Exciting Discounts
                       </span>{" "}
-                      with your CoreXCapital card
+                      with your TraderConnects card
                     </Typography>
                   </Stack>
                 </Stack>

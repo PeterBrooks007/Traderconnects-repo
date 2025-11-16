@@ -27,7 +27,6 @@ import {
 } from "@phosphor-icons/react";
 import YandexTranslateWidget from "../../components/YandexTranslateWidget";
 
-
 import HeroBackgroundImage from "../../assets/herobackgroundImage.webp";
 
 const MotionBox = motion(Box);
@@ -122,7 +121,7 @@ const Homedesktop = () => {
               textAlign={isMobile ? "center" : "left"}
               variants={FADE_DOWN_ANIMATION_VARIANTS}
             >
-              CHALLENGE THE MARKET WITH CoreXCapital WEB APP
+              CHALLENGE THE MARKET WITH TRADERCONNECTS WEB APP
             </MotionTypography>
 
             <MotionTypography
@@ -220,7 +219,7 @@ const Homedesktop = () => {
         </Box>
       </Container>
 
-       <Box sx={{ marginTop: -8, marginLeft: 10 }}>
+      <Box sx={{ marginTop: -8, marginLeft: 10 }}>
         <YandexTranslateWidget />
       </Box>
     </Box>

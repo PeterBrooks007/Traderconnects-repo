@@ -145,7 +145,7 @@ const Login = () => {
                   textAlign={"center"}
                   pt={2}
                 >
-                  Login with your CoreXCapital Credentials
+                  Login with your TraderConnects Credentials
                 </Typography>
                 <Typography
                   variant="subtitle2"

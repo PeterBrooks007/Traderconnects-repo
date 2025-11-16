@@ -75,7 +75,7 @@ const HomeHeader = () => {
             fontWeight={"700"}
             sx={{ display: { xs: "none", sm: "flex", color: "white" } }}
           >
-            Core
+            Trader
           </Typography>
         </Link>
          <Link component={RouterLink} to="/">
@@ -92,7 +92,7 @@ const HomeHeader = () => {
             fontWeight={"700"}
             sx={{ display: { xs: "none", sm: "flex", color: "white" } }}
           >
-          Capital
+          Connects
           </Typography>
         </Link>
       </Box>

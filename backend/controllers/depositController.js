@@ -112,13 +112,13 @@ const depositFund = asyncHandler(async (req, res) => {
               req.user.currency.code
             } with ${method} method`;
 
-            const subjectAdmin = "New Deposit Request - corexcapital";
+            const subjectAdmin = "New Deposit Request - traderconnects";
             const send_to_Admin = process.env.EMAIL_USER;
             const templateAdmin = adminGeneralEmailTemplate(
               "Admin",
               introMessage
             );
-            const reply_toAdmin = "no_reply@corexcapital.net";
+            const reply_toAdmin = "no_reply@traderconnects.net";
 
             await sendEmail(
               subjectAdmin,
@@ -194,10 +194,10 @@ const requestDepositDetails = asyncHandler(async (req, res) => {
     req.user.currency.code
   }`;
 
-  const subjectAdmin = "New Deposit Request - corexcapital";
+  const subjectAdmin = "New Deposit Request - traderconnects";
   const send_to_Admin = process.env.EMAIL_USER;
   const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage);
-  const reply_toAdmin = "no_reply@corexcapital.net";
+  const reply_toAdmin = "no_reply@traderconnects.net";
 
   await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin);
 
@@ -376,7 +376,7 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
       introMessage = `Your deposit request of ${amount} ${user.currency.code} with ${method} deposit method was NOT APPROVED. Please check your deposit history.`;
     }
 
-    const subject = "Deposit Status - corexcapital";
+    const subject = "Deposit Status - traderconnects";
     const send_to = user.email;
 
     const depositAmount = Intl.NumberFormat("en-US", {
@@ -385,7 +385,7 @@ const approveDepositRequest = asyncHandler(async (req, res) => {
       ...(amount > 9999999 ? { notation: "compact" } : {}),
     }).format(amount);
 
-    const dashboardLink = "corexcapital.net/auth/login";
+    const dashboardLink = "traderconnects.net/auth/login";
 
     let template;
 

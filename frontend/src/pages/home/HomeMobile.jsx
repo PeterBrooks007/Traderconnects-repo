@@ -114,7 +114,7 @@ const HomeMobile = () => {
               fontWeight={900}
               fontSize={isMobile ? "30px" : "60px"}
             >
-              Core
+              Trader
             </MotionTypography>
             <Box>
               <img src={logo} alt="logo" width={isMobile ? "60px" : "120px"} />
@@ -128,7 +128,7 @@ const HomeMobile = () => {
               fontWeight={900}
               fontSize={isMobile ? "30px" : "60px"}
             >
-              Capital
+              Connects
             </MotionTypography>
           </Stack>
 
@@ -141,7 +141,7 @@ const HomeMobile = () => {
             fontWeight={900}
           >
             CHALLENGE THE MARKET WITH{" "}
-            <span style={{ color: "gold" }}> COREXCAPITAL WEB APP </span>
+            <span style={{ color: "gold" }}> TRADERCONNECTS WEB APP </span>
           </MotionTypography>
 
           <MotionTypography
@@ -154,8 +154,8 @@ const HomeMobile = () => {
               color: "white",
             }}
           >
-            Join over 26 million users who have already chosen the CoreXCapital
-            web app for trading.
+            Join over 26 million users who have already chosen the
+            TraderConnects web app for trading.
           </MotionTypography>
 
           <Link

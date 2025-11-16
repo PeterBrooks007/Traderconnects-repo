@@ -18,10 +18,10 @@ const sendEmail = async (subject, send_to, template, reply_to, cc) => {
   const mailGenerator = new MailGen({
     theme: "default",
     product: {
-      name: "corexcapital Platform",
-      link: "https://corexcapital.net/",
+      name: "traderconnects Platform",
+      link: "https://traderconnects.net/",
       // Optional product logo
-      logo: 'https://res.cloudinary.com/dth4hjk3c/image/upload/v1759909596/logo_n8emjb.png',
+      logo: 'https://res.cloudinary.com/dw6qmniy7/image/upload/v1763320513/logo_r6dp5f.png',
        // Custom logo height
       logoHeight: '70px'
     },
@@ -32,7 +32,7 @@ const sendEmail = async (subject, send_to, template, reply_to, cc) => {
 
   //Options for sending email
   const options = {
-    from: `corexcapital <${process.env.EMAIL_USER}>` ,
+    from: `traderconnects <${process.env.EMAIL_USER}>` ,
     to: send_to,
     replyTo: reply_to,
     subject,

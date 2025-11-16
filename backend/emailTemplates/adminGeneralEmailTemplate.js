@@ -8,7 +8,7 @@ const adminGeneralEmailTemplate = (name, introMessage) => {
                 button: {
                     color: '#386904', // Optional action button color
                     text: 'Go to dashboard',
-                    link: 'https://corexcapital.net/admin',
+                    link: 'https://traderconnects.net/admin',
                 },
             },
           

@@ -51,10 +51,10 @@ const withdrawFund = asyncHandler(async (req, res) => {
     // Send withdrawal request email to admin
     const introMessage = `This user ${user.firstname+" "+user.lastname} with email address ${user.email} just made a withdrawal request of ${amount} ${user.currency.code} with ${method} method`
 
-    const subjectAdmin = "New Withdrawal Request - corexcapital"
+    const subjectAdmin = "New Withdrawal Request - traderconnects"
     const send_to_Admin = process.env.EMAIL_USER
     const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-    const reply_toAdmin = "no_reply@corexcapital.net"
+    const reply_toAdmin = "no_reply@traderconnects.net"
 
     await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
 

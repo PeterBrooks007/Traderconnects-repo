@@ -192,7 +192,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 color={colors.grey[100]}
                 sx={{ display: isCollapsed && "none" }}
               >
-                CoreXCapital
+                TraderConnects
               </Typography>
               {/* <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                     <List size={28} />

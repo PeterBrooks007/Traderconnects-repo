@@ -656,7 +656,7 @@ const Dashboard = () => {
             borderRadius={"10px"}
           >
             <Typography>
-              All contents © {new Date().getFullYear()} CoreXCapital Ltd.
+              All contents © {new Date().getFullYear()} TraderConnects Ltd.
               All rights reserved.
             </Typography>
           </Stack>

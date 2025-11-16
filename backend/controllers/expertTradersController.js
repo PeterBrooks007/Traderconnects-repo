@@ -426,10 +426,10 @@ const myExpertTrader = asyncHandler(async (req, res) => {
     // Send user copy trader email to admin
     const introMessage = `This user ${user.firstname+" "+user.lastname} with email address ${user.email} just copied this trader ${expertTraderExists.firstname+" "+expertTraderExists.lastname}`
 
-    const subjectAdmin = "New Add Copy Trader - corexcapital"
+    const subjectAdmin = "New Add Copy Trader - traderconnects"
     const send_to_Admin = process.env.EMAIL_USER
     const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-    const reply_toAdmin = "no_reply@corexcapital.net"
+    const reply_toAdmin = "no_reply@traderconnects.net"
 
     await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
 
@@ -487,10 +487,10 @@ const removeFromMyExpertTrader = asyncHandler(async (req, res) => {
     // Send user remove copy trader email to admin
     const introMessage = `This user ${user.firstname+" "+user.lastname} with email address ${user.email} just removed this trader ${expertTraderExists.firstname+" "+expertTraderExists.lastname}`
 
-    const subjectAdmin = "New Remove Copy Trader - corexcapital"
+    const subjectAdmin = "New Remove Copy Trader - traderconnects"
     const send_to_Admin = process.env.EMAIL_USER
     const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-    const reply_toAdmin = "no_reply@corexcapital.net"
+    const reply_toAdmin = "no_reply@traderconnects.net"
 
     await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
 

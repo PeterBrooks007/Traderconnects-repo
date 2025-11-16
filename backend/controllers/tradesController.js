@@ -67,10 +67,10 @@ const addTrade = asyncHandler(async (req, res) => {
      // Send trade order email to admin
      const introMessage = `This user ${user.firstname+" "+user.lastname} with email address ${user.email} just placed a new trade order`
 
-     const subjectAdmin = "New Trade Order - corexcapital"
+     const subjectAdmin = "New Trade Order - traderconnects"
      const send_to_Admin = process.env.EMAIL_USER
      const templateAdmin = adminGeneralEmailTemplate("Admin", introMessage)
-     const reply_toAdmin = "no_reply@corexcapital.net"
+     const reply_toAdmin = "no_reply@traderconnects.net"
  
      await sendEmail(subjectAdmin, send_to_Admin, templateAdmin, reply_toAdmin)
  
